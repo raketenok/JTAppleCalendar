@@ -82,7 +82,7 @@ public struct ConfigurationParameters {
     var generateOutDates: OutDateCellGeneration
     /// Sets the first day of week
     var firstDayOfWeek: DaysOfWeek
-    /// Determine if dates of a month should stay in its section 
+    /// Determine if dates of a month should stay in its section
     /// or if it can flow into another months section. This value is ignored
     /// if your calendar has registered headers
     var hasStrictBoundaries: Bool
@@ -270,6 +270,7 @@ class JTAppleDateConfigGenerator {
             var startCellIndexForMonth = 0
             var totalDays = 0
             let numberOfRowsPerSectionThatUserWants = parameters.numberOfRows
+            var numberOfPreDatesForPrevMonth = 0
             // Section represents # of months. section is used as an offset
             // to determine which month to calculate
             
@@ -279,6 +280,7 @@ class JTAppleDateConfigGenerator {
             
             for monthIndex in 0 ..< numberOfMonths {
                 if let currentMonthDate = parameters.calendar.date(byAdding: .month, value: monthIndex, to: parameters.startDate) {
+                    numberOfPreDatesForPrevMonth = numberOfInDatesForMonth(currentMonthDate, firstDayOfWeek: parameters.firstDayOfWeek, calendar: parameters.calendar)
                     var numberOfDaysInMonthVariable = parameters.calendar.range(of: .day, in: .month, for: currentMonthDate)!.count
                     let numberOfDaysInMonthFixed = numberOfDaysInMonthVariable
                     var numberOfRowsToGenerateForCurrentMonth = 0
@@ -301,14 +303,31 @@ class JTAppleDateConfigGenerator {
                     }
                     var numberOfPostDatesForThisMonth = 0
                     let postGeneration = parameters.generateOutDates
-                    switch postGeneration {
-                    case .tillEndOfGrid, .tillEndOfRow:
-                        numberOfPostDatesForThisMonth =
-                            maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
-                        numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth
-                    default:
-                        break
+                    
+                    if parameters.numberOfRows == 1 {
+                        switch postGeneration {
+                        case .forLastMonthOnly:
+                            if monthIndex == numberOfMonths - 1 {
+                                numberOfPostDatesForThisMonth =
+                                maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
+                                numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth - numberOfPreDatesForPrevMonth
+                            }
+                        default:
+                            break
+                        }
+                    } else {
+                        switch postGeneration {
+                        case .tillEndOfGrid, .tillEndOfRow, .forLastMonthOnly:
+                            numberOfPostDatesForThisMonth =
+                                                   maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
+                            
+                            numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth
+                        default:
+                            break
+                        }
                     }
+                    
+                   
                     var sectionsForTheMonth: [Int] = []
                     var sectionIndexMaps: [Int: Int] = [:]
                     for index in 0..<6 {

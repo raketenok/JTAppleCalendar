@@ -40,7 +40,8 @@ public enum OutDateCellGeneration {
     /// tillEndOfRow will generate dates till it reaches the end of a row.
     /// endOfGrid will continue generating until it has filled a 6x7 grid.
     /// Off-mode will generate no postdates
-    case tillEndOfRow, tillEndOfGrid, off
+    /// forLastMonthOnly is active only for weekly mode (numberOfRows = 1)
+    case tillEndOfRow, tillEndOfGrid, off, forLastMonthOnly
 }
 
 /// Describes the types of out-date cells to be generated.
