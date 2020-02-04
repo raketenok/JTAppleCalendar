@@ -143,7 +143,7 @@ extension JTACMonthView {
                 startMonth = calendar.startOfMonth(for: validConfig.startDate),
                 let endMonth = calendar.endOfMonth(for: validConfig.endDate) {
                 startOfMonthCache = startMonth
-                endOfMonthCache   = endMonth
+                endOfMonthCache   = validConfig.numberOfRows == 1 ? validConfig.endDate : endMonth
                 // Create the parameters for the date format generator
                 let parameters = ConfigurationParameters(startDate: startOfMonthCache,
                                                          endDate: endOfMonthCache,
