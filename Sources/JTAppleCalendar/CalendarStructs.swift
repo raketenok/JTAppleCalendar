@@ -282,9 +282,10 @@ class JTAppleDateConfigGenerator {
                 if let currentMonthDate = parameters.calendar.date(byAdding: .month, value: monthIndex, to: parameters.startDate) {
                     numberOfPreDatesForPrevMonth = numberOfInDatesForMonth(currentMonthDate, firstDayOfWeek: parameters.firstDayOfWeek, calendar: parameters.calendar)
                     var numberOfDaysInMonthVariable = parameters.calendar.range(of: .day, in: .month, for: currentMonthDate)!.count
-                    let numberOfDaysInMonthFixed = numberOfDaysInMonthVariable
+                    var numberOfDaysInMonthFixed = numberOfDaysInMonthVariable
                     var numberOfRowsToGenerateForCurrentMonth = 0
                     var numberOfPreDatesForThisMonth = 0
+                    var weekdayOfLastDate = 0
                     let predatesGeneration = parameters.generateInDates
                     if predatesGeneration != .off {
                         numberOfPreDatesForThisMonth = numberOfInDatesForMonth(currentMonthDate, firstDayOfWeek: parameters.firstDayOfWeek, calendar: parameters.calendar)
@@ -298,22 +299,46 @@ class JTAppleDateConfigGenerator {
                     if parameters.generateOutDates == .tillEndOfGrid {
                         numberOfRowsToGenerateForCurrentMonth = maxNumberOfRowsPerMonth
                     } else {
-                        let actualNumberOfRowsForThisMonth = Int(ceil(Float(numberOfDaysInMonthVariable) / Float(maxNumberOfDaysInWeek)))
-                        numberOfRowsToGenerateForCurrentMonth = actualNumberOfRowsForThisMonth
+                            
+                        if parameters.generateOutDates == .forLastMonthOnly, parameters.numberOfRows == 1, monthIndex == numberOfMonths - 1 {
+                            
+                            let lastDate = parameters.firstDayOfWeek == .monday ? parameters.calendar.date(byAdding: .day, value: -1, to: parameters.endDate) : parameters.endDate
+                            
+                            if let lastDate = lastDate,
+                                let firstDayOfWeek = parameters.calendar.date(from: parameters.calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: lastDate)),
+                                let lastDayOfWeek = parameters.calendar.date(byAdding: .day, value: 7, to: firstDayOfWeek) {
+                                                            
+                                let isEndDateSameMonthWithLastDayOfWeek = parameters.calendar.isDate(parameters.endDate, equalTo: lastDayOfWeek, toGranularity: .month)
+                                
+                                if let numberOfDaysInLastMonth = parameters.calendar.dateComponents([.day], from: lastDayOfWeek).day {
+
+                                    weekdayOfLastDate = Calendar.current.component(.weekday, from: lastDate)
+                                    
+                                    if isEndDateSameMonthWithLastDayOfWeek {
+                                        numberOfDaysInMonthVariable = numberOfDaysInLastMonth
+                                        numberOfDaysInMonthFixed = numberOfDaysInLastMonth
+                                    }
+                                }
+                            }
+
+                            if ((weekdayOfLastDate == 1 || weekdayOfLastDate == 2) && numberOfDaysInMonthFixed == 31) ||
+                                (weekdayOfLastDate == 1 && numberOfDaysInMonthFixed == 30) {
+                                numberOfRowsToGenerateForCurrentMonth = maxNumberOfRowsPerMonth
+                            } else {
+                                numberOfRowsToGenerateForCurrentMonth = Int(ceil(Float(numberOfDaysInMonthVariable) / Float(maxNumberOfDaysInWeek)))
+                            }
+                        } else {
+                            numberOfRowsToGenerateForCurrentMonth = Int(ceil(Float(numberOfDaysInMonthVariable) / Float(maxNumberOfDaysInWeek)))
+                        }
                     }
+                    
                     var numberOfPostDatesForThisMonth = 0
                     let postGeneration = parameters.generateOutDates
                     
-                    if parameters.numberOfRows == 1 {
-                        switch postGeneration {
-                        case .forLastMonthOnly:
-                            if monthIndex == numberOfMonths - 1 {
-                                numberOfPostDatesForThisMonth =
-                                maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
-                                numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth - numberOfPreDatesForPrevMonth
-                            }
-                        default:
-                            break
+                    if parameters.numberOfRows == 1, postGeneration == .forLastMonthOnly {
+                        if monthIndex == numberOfMonths - 1  {
+                            numberOfPostDatesForThisMonth = maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
+                                                          numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth - numberOfPreDatesForPrevMonth
                         }
                     } else {
                         switch postGeneration {
