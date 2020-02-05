@@ -324,6 +324,9 @@ class JTAppleDateConfigGenerator {
                             if ((weekdayOfLastDate == 1 || weekdayOfLastDate == 2) && numberOfDaysInMonthFixed == 31) ||
                                 (weekdayOfLastDate == 1 && numberOfDaysInMonthFixed == 30) {
                                 numberOfRowsToGenerateForCurrentMonth = maxNumberOfRowsPerMonth
+                            } else if ( weekdayOfLastDate != 7 && numberOfDaysInMonthFixed == 28) {
+                                //28 february is the last day of the month
+                                numberOfRowsToGenerateForCurrentMonth = maxNumberOfRowsPerMonth - 1
                             } else {
                                 numberOfRowsToGenerateForCurrentMonth = Int(ceil(Float(numberOfDaysInMonthVariable) / Float(maxNumberOfDaysInWeek)))
                             }
