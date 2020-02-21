@@ -296,11 +296,12 @@ class JTAppleDateConfigGenerator {
                         }
                     }
                     
+                    let isStartAndEndAreSameMonthsDates = parameters.calendar.isDate(parameters.endDate, equalTo: parameters.startDate, toGranularity: .month)
+
                     if parameters.generateOutDates == .tillEndOfGrid {
                         numberOfRowsToGenerateForCurrentMonth = maxNumberOfRowsPerMonth
                     } else {
-                            
-                        if parameters.generateOutDates == .forLastMonthOnly, parameters.numberOfRows == 1, monthIndex == numberOfMonths - 1 {
+                        if parameters.generateOutDates == .forLastMonthOnly, parameters.numberOfRows == 1, monthIndex == numberOfMonths - 1, !isStartAndEndAreSameMonthsDates {
                             
                             let lastDate = parameters.firstDayOfWeek == .monday ? parameters.calendar.date(byAdding: .day, value: -1, to: parameters.endDate) : parameters.endDate
                             
@@ -338,10 +339,10 @@ class JTAppleDateConfigGenerator {
                     var numberOfPostDatesForThisMonth = 0
                     let postGeneration = parameters.generateOutDates
                     
-                    if parameters.numberOfRows == 1, postGeneration == .forLastMonthOnly {
+                    if parameters.numberOfRows == 1, postGeneration == .forLastMonthOnly, !isStartAndEndAreSameMonthsDates {
                         if monthIndex == numberOfMonths - 1  {
                             numberOfPostDatesForThisMonth = maxNumberOfDaysInWeek * numberOfRowsToGenerateForCurrentMonth - (numberOfDaysInMonthFixed + numberOfPreDatesForThisMonth)
-                                                          numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth - numberOfPreDatesForPrevMonth
+                            numberOfDaysInMonthVariable += numberOfPostDatesForThisMonth - numberOfPreDatesForPrevMonth
                         }
                     } else {
                         switch postGeneration {
